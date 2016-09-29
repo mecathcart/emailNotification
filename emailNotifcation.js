@@ -13,17 +13,26 @@ function sendEmails() {
 
   // For every row object, create a personalized email from a template and send
   // it to the appropriate person.
-  for (var i = 0; i < objects.length; ++i) {
+  for (var i = 1; i < objects.length; ++i) {
     // Get a row object
     var rowData = objects[i];
-
+    
+    rowData.day1 = spellDay(rowData.day1);
+    rowData.day2 = spellDay(rowData.day2);
+    rowData.time1 = extractTime(rowData.time1);
+    rowData.time2 = extractTime(rowData.time2);
+    
+    rowData.studentName =firstNameFirst(rowData.studentName);
+    Logger.log(rowData.studentName);
+    
+    
     // Generate a personalized email.
     // Given a template string, replace markers (for instance ${"First Name"}) with
     // the corresponding value in a row object (for instance rowData.firstName).
     var emailText = fillInTemplateFromObject(emailTemplate, rowData);
     var emailSubject = "Tutoring Schedule Change";
 
-    MailApp.sendEmail("mdotedot@udel.edu", emailSubject, emailText);
+  //  MailApp.sendEmail(rowData.email, emailSubject, emailText);
   } 
 }
 
@@ -43,8 +52,11 @@ function fillInTemplateFromObject(template, data) {
   // Replace variables from the template with the actual values from the data object.
   // If no value is available, replace with the empty string.
   for (var i = 0; i < templateVars.length; ++i) {
+  
     // normalizeHeader ignores ${"} so we can call it directly here.
     var variableData = data[normalizeHeader(templateVars[i])];
+    
+
     email = email.replace(templateVars[i], variableData || "");
   }
 
@@ -74,7 +86,7 @@ function fillInTemplateFromObject(template, data) {
 function getRowsData(sheet, range, columnHeadersRowIndex) {
   columnHeadersRowIndex = columnHeadersRowIndex || range.getRowIndex() - 1;
   var numColumns = range.getEndColumn() - range.getColumn() + 1;
-  Logger.log(numColumns);
+  //Logger.log(numColumns);
   var headersRange = sheet.getRange(1,1,1,12);
   var headers = headersRange.getValues()[0];
   return getObjects(range.getValues(), normalizeHeaders(headers));
@@ -174,7 +186,17 @@ function isDigit(char) {
 
 
 
+function firstNameFirst(studentName){
 
+  studentName = studentName.split(","); 
+  
+  studentName.reverse();
+  studentName.join(" ");
+  studentName.toString();
+//  studentName.replace(/,/g, '');
+  
+  return studentName;
+};
 
 
 
@@ -192,22 +214,22 @@ function spellDay(day) {
   switch (day) {
 
     case "M":
-      day = " on Monday";
+      day = "Monday";
       break;
     case "T":
-      day = " on Tuesday";
+      day = "Tuesday";
       break;
     case "W":
-      day = " on Wednesday";
+      day = "Wednesday";
       break;
     case "R":
-      day = " on Thursday";
+      day = "Thursday";
       break;
     case "MW":
-      day = " on Monday and Wednesday";
+      day = "Monday and Wednesday";
       break;
     case "TR":
-      day = " on Tuesday and Thursday";
+      day = "Tuesday and Thursday";
       break;
 
   }
@@ -220,7 +242,7 @@ function spellDay(day) {
 //function extracts time  
 function extractTime(time) {
   var hour = time.getHours();
-  hour = hour - 3;
+//  hour = hour - 3;
   var minute = time.getMinutes();
   if (minute === 0) {
     minute = minute.toString();
@@ -231,9 +253,6 @@ function extractTime(time) {
   }
 
   time = hour.toString().concat(":").concat(minute);
-
-  var at = " at "
-  time = at.concat(time);
 
   return time;
 };
