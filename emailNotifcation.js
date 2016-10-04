@@ -1,4 +1,31 @@
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var dataSheet = ss.getSheets()[0];
+  var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(), 12);
+
+
+  var templateSheet = ss.getSheets()[1];
+  var emailTemplate = templateSheet.getRange("A1").getValue();
+
+
+  function makeOldSchedule(){
+ 
+    var sheet = ss.getSheetByName("Schedule");
+    var destination = ss;
+    var oldSchedule = sheet.copyTo(destination);
+    var oldScheduleRange = oldSchedule.getRange(1, 1, oldSchedule.getMaxRows(), 12);
+    var oldObjects = getRowsData(oldSchedule, oldScheduleRange);
+  //  Logger.log(oldObjects);
+    
+   return oldObjects;
+  }
+  
+
+
+  oldObjects = makeOldSchedule();
+
+
 function sendEmails() {
+ 
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var dataSheet = ss.getSheets()[0];
   var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(), 12);
@@ -6,24 +33,45 @@ function sendEmails() {
   var templateSheet = ss.getSheets()[1];
   var emailTemplate = templateSheet.getRange("A1").getValue();
 
-  // Create one JavaScript object per row of data.
+ 
   objects = getRowsData(dataSheet, dataRange);
-
-
-
+  
+  
+ // makeOldSchedule();
+ 
   // For every row object, create a personalized email from a template and send
   // it to the appropriate person.
   for (var i = 1; i < objects.length; ++i) {
     // Get a row object
     var rowData = objects[i];
+    var oldRowData = oldObjects[i];
     
+  
+    
+    if(rowData.tutor1 != oldRowData.tutor1){
+    
+        Logger.log("data was not equal");
+
+    }else{
+    Logger.log("Data was equal");
+    };
+    
+  
+    
+    
+    
+    
+    
+    
+    
+    //clean data
     rowData.day1 = spellDay(rowData.day1);
     rowData.day2 = spellDay(rowData.day2);
     rowData.time1 = extractTime(rowData.time1);
     rowData.time2 = extractTime(rowData.time2);
     
     rowData.studentName =firstNameFirst(rowData.studentName);
-    Logger.log(rowData.studentName);
+//    Logger.log(rowData.studentName);
     
     
     // Generate a personalized email.
@@ -32,7 +80,7 @@ function sendEmails() {
     var emailText = fillInTemplateFromObject(emailTemplate, rowData);
     var emailSubject = "Tutoring Schedule Change";
 
-  //  MailApp.sendEmail(rowData.email, emailSubject, emailText);
+//    MailApp.sendEmail(rowData.email, emailSubject, emailText);
   } 
 }
 
@@ -185,15 +233,10 @@ function isDigit(char) {
 }
 
 
-
+//Function reverses the order of the names so that the first name appears first.
 function firstNameFirst(studentName){
 
-  studentName = studentName.split(","); 
-  
-  studentName.reverse();
-  studentName.join(" ");
-  studentName.toString();
-//  studentName.replace(/,/g, '');
+  studentName = studentName.split(",").reverse().toString().replace(",", " "); 
   
   return studentName;
 };
