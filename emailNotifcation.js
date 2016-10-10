@@ -3,21 +3,22 @@
   var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(), 12);
 
 
-  var templateSheet = ss.getSheets()[1];
-  var emailTemplate = templateSheet.getRange("A1").getValue();
-
-
   function makeOldSchedule(){
- 
+   if(ss.getSheetByName("Copy of Schedule") != null){
+      ss.setActiveSheet(ss.getSheetByName("Copy of Schedule"));
+       ss.deleteActiveSheet();
+   
+   }//end if clause
+   
     var sheet = ss.getSheetByName("Schedule");
     var destination = ss;
     var oldSchedule = sheet.copyTo(destination);
   //  var oldScheduleRange = oldSchedule.getRange(1, 1, oldSchedule.getMaxRows(), 12);
   //  var oldObjects = getRowsData(oldSchedule, oldScheduleRange);
-  //  Logger.log(oldObjects);
+  //  Logger.log("I worked");
     
    return oldSchedule;
-  }
+  }//ends makeOldScheudle Function
   
   
 //oldObjects = makeOldSchedule();
@@ -37,9 +38,7 @@ function sendEmails() {
   var oldScheduleRange = oldSchedule.getRange(1, 1, oldSchedule.getMaxRows(), 12);
   var oldObjects = getRowsData(oldSchedule, oldScheduleRange);
  
- 
-
- 
+  
   objects = getRowsData(dataSheet, dataRange);
   
  
@@ -50,36 +49,48 @@ function sendEmails() {
     var rowData = objects[i];
     var oldRowData = oldObjects[i];
     
-    
+//    Logger.log(rowData[i]);
     if(rowData.tutor1 != oldRowData.tutor1|| rowData.tutor2 != oldRowData.tutor2 && rowData.studentName == oldRowData.studentName){
     
        // Logger.log("data was changed");
-           
+         if (rowData.tutor1 === "-") {
+            Logger.log("Tutor 1 is not assigned");
+            rowData.tutor1 = "Tutor 1 is not assigned.";
+          } else if (rowData.tutor1 === "NS") {
+            rowData.tutor1 = "Must see Ken Hyde by Thursday of Week 2 to schedule tutors.";
+          } else {   
         //clean data
+ //       Logger.log(rowData.studentName);
+
         rowData.day1 = spellDay(rowData.day1);
         rowData.day2 = spellDay(rowData.day2);
         rowData.time1 = extractTime(rowData.time1);
         rowData.time2 = extractTime(rowData.time2);
         rowData.studentName =firstNameFirst(rowData.studentName);
-    
+          }//ends if else clause
     
         // Generate a personalized email.
         // Given a template string, replace markers (for instance ${"First Name"}) with
         // the corresponding value in a row object (for instance rowData.firstName).
         var emailText = fillInTemplateFromObject(emailTemplate, rowData);
         var emailSubject = "Tutoring Schedule Change";
+        Logger.log("I would have sent this email");
     //  MailApp.sendEmail(rowData.email, emailSubject, emailText);
-
-
-//TODO delete old schedule
 
 
     }else{
     Logger.log("Data was equal");
-    };
+    };//ends else clause
  
-  } 
-}
+  }//ends for loop 
+          
+  makeOldSchedule();
+   
+}//ends sendEmail function
+
+
+ 
+ 
 
 
 // Replaces markers in a template string with values define in a JavaScript data object.
@@ -241,14 +252,6 @@ function firstNameFirst(studentName){
 
 
 
-
-
-
-
-
-
-
-
 //spells out days of the week.      
 function spellDay(day) {
   switch (day) {
@@ -281,6 +284,7 @@ function spellDay(day) {
 
 //function extracts time  
 function extractTime(time) {
+  
   var hour = time.getHours();
 //  hour = hour - 3;
   var minute = time.getMinutes();
