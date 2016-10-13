@@ -1,47 +1,24 @@
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var dataSheet = ss.getSheets()[0];
-  var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(), 12);
+ //identifies spreadsheet and first sheet
+ var ss = SpreadsheetApp.getActiveSpreadsheet();
+ var dataSheet = ss.getSheets()[0];
+ var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(),dataSheet.getMaxColumns());
 
-
-  function makeOldSchedule(){
-   if(ss.getSheetByName("Copy of Schedule") != null){
-      ss.setActiveSheet(ss.getSheetByName("Copy of Schedule"));
-       ss.deleteActiveSheet();
-   
-   }//end if clause
-   
-    var sheet = ss.getSheetByName("Schedule");
-    var destination = ss;
-    var oldSchedule = sheet.copyTo(destination);
-  //  var oldScheduleRange = oldSchedule.getRange(1, 1, oldSchedule.getMaxRows(), 12);
-  //  var oldObjects = getRowsData(oldSchedule, oldScheduleRange);
-  //  Logger.log("I worked");
-    
-   return oldSchedule;
-  }//ends makeOldScheudle Function
-  
-  
-//oldObjects = makeOldSchedule();
-
-
+//main function of app, runs on onEdit trigger. 
+//This function goes through each row, comapres them to the old schedule, fills in email template, sends email and then updates the old schedule.
 function sendEmails() {
-
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var dataSheet = ss.getSheets()[0];
-  var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(), 12);
-
+  
+  // get template
   var templateSheet = ss.getSheets()[1];
   var emailTemplate = templateSheet.getRange("A1").getValue();
-
- 
+  
+  // get old schedule and make it into javascript objects
   var oldSchedule = ss.getSheetByName("Copy of Schedule");
   var oldScheduleRange = oldSchedule.getRange(1, 1, oldSchedule.getMaxRows(), 12);
   var oldObjects = getRowsData(oldSchedule, oldScheduleRange);
  
-  
+  //make new schedule into javascript object
   objects = getRowsData(dataSheet, dataRange);
   
- 
   // For every row object, create a personalized email from a template and send
   // it to the appropriate person.
   for (var i = 1; i < objects.length; ++i) {
@@ -49,50 +26,61 @@ function sendEmails() {
     var rowData = objects[i];
     var oldRowData = oldObjects[i];
     
-//    Logger.log(rowData[i]);
+    //if the student name is the same but tutor1 or tutor2 don't match then it will prepare to send email
     if(rowData.tutor1 != oldRowData.tutor1|| rowData.tutor2 != oldRowData.tutor2 && rowData.studentName == oldRowData.studentName){
-    
-       // Logger.log("data was changed");
+         //Takes out students who don't have a tutoring schedule
          if (rowData.tutor1 === "-") {
             Logger.log("Tutor 1 is not assigned");
-            rowData.tutor1 = "Tutor 1 is not assigned.";
           } else if (rowData.tutor1 === "NS") {
-            rowData.tutor1 = "Must see Ken Hyde by Thursday of Week 2 to schedule tutors.";
+            Logger.log("Must see Ken Hyde by Thursday of Week 2 to schedule tutors.");
           } else {   
-        //clean data
- //       Logger.log(rowData.studentName);
 
+        //these functions clean the data to place into template
         rowData.day1 = spellDay(rowData.day1);
         rowData.day2 = spellDay(rowData.day2);
         rowData.time1 = extractTime(rowData.time1);
         rowData.time2 = extractTime(rowData.time2);
         rowData.studentName =firstNameFirst(rowData.studentName);
-          }//ends if else clause
     
         // Generate a personalized email.
         // Given a template string, replace markers (for instance ${"First Name"}) with
         // the corresponding value in a row object (for instance rowData.firstName).
         var emailText = fillInTemplateFromObject(emailTemplate, rowData);
         var emailSubject = "Tutoring Schedule Change";
-        Logger.log("I would have sent this email");
-    //  MailApp.sendEmail(rowData.email, emailSubject, emailText);
+     
+       Logger.log(emailText);
+  //     MailApp.sendEmail(rowData.email, emailSubject, emailText);
+  
+        }//ends if else clause
+
 
 
     }else{
-    Logger.log("Data was equal");
+  //  Logger.log("Data was equal");
     };//ends else clause
  
   }//ends for loop 
-          
+   
+  //updates old schedule 
   makeOldSchedule();
    
 }//ends sendEmail function
 
 
+//function deletes old schedule and then copies in the new one
+ function makeOldSchedule(){
+    if(ss.getSheetByName("Copy of Schedule") != null){
+       ss.setActiveSheet(ss.getSheetByName("Copy of Schedule"));
+       ss.deleteActiveSheet();
+     }//end if clause
+   
+     var sheet = ss.getSheetByName("Schedule");
+     var destination = ss;
+     var oldSchedule = sheet.copyTo(destination);    
+     return oldSchedule;
+  }//ends makeOldSchedule Function
+  
  
- 
-
-
 // Replaces markers in a template string with values define in a JavaScript data object.
 // Arguments:
 //   - template: string containing markers, for instance ${"Column name"}
@@ -104,24 +92,15 @@ function fillInTemplateFromObject(template, data) {
   var email = template;
   // Search for all the variables to be replaced, for instance ${"Column name"}
   var templateVars = template.match(/\$\{\"[^\"]+\"\}/g);
-
   // Replace variables from the template with the actual values from the data object.
   // If no value is available, replace with the empty string.
-  for (var i = 0; i < templateVars.length; ++i) {
-  
+  for (var i = 0; i < templateVars.length; ++i) {  
     // normalizeHeader ignores ${"} so we can call it directly here.
     var variableData = data[normalizeHeader(templateVars[i])];
-    
-
     email = email.replace(templateVars[i], variableData || "");
   }
-
   return email;
 }
-
-
-
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -240,17 +219,13 @@ function isDigit(char) {
   return char >= '0' && char <= '9';
 }
 
+//the following functions clean the data for use in the template
 
 //Function reverses the order of the names so that the first name appears first.
 function firstNameFirst(studentName){
-
   studentName = studentName.split(",").reverse().toString().replace(",", " "); 
-  
   return studentName;
 };
-
-
-
 
 //spells out days of the week.      
 function spellDay(day) {
@@ -280,13 +255,9 @@ function spellDay(day) {
 };
 
 
-
-
 //function extracts time  
 function extractTime(time) {
-  
   var hour = time.getHours();
-//  hour = hour - 3;
   var minute = time.getMinutes();
   if (minute === 0) {
     minute = minute.toString();
@@ -295,9 +266,7 @@ function extractTime(time) {
     minute = minute.toString();
     minute = minute.concat("am");
   }
-
   time = hour.toString().concat(":").concat(minute);
-
   return time;
 };
 
