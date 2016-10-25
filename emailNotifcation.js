@@ -2,10 +2,17 @@
  var ss = SpreadsheetApp.getActiveSpreadsheet();
  var dataSheet = ss.getSheets()[0];
  var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(),dataSheet.getMaxColumns());
+ 
+
 
 //main function of app, runs on onEdit trigger. 
 //This function goes through each row, comapres them to the old schedule, fills in email template, sends email and then updates the old schedule.
 function sendEmails() {
+  getEmailFromUser();
+  //making the email be from whoever makes the changes
+ //var me = Session.getActiveUser().getEmail();
+ //var aliases = GmailApp.getAliases();
+ //Logger.log(me);
   
   // get template
   var templateSheet = ss.getSheets()[1];
@@ -13,7 +20,7 @@ function sendEmails() {
   
   // get old schedule and make it into javascript objects
   var oldSchedule = ss.getSheetByName("Copy of Schedule");
-  var oldScheduleRange = oldSchedule.getRange(1, 1, oldSchedule.getMaxRows(), 12);
+  var oldScheduleRange = oldSchedule.getRange(1, 1, oldSchedule.getMaxRows(), oldSchedule.getMaxColumns());
   var oldObjects = getRowsData(oldSchedule, oldScheduleRange);
  
   //make new schedule into javascript object
@@ -27,9 +34,9 @@ function sendEmails() {
     var oldRowData = oldObjects[i];
     
     //if the student name is the same but tutor1 or tutor2 don't match then it will prepare to send email
-    if(rowData.tutor1 != oldRowData.tutor1|| rowData.tutor2 != oldRowData.tutor2 && rowData.studentName == oldRowData.studentName){
+    if(rowData.code1 != oldRowData.code1 || rowData.code2 != oldRowData.code2 && rowData.studentName == oldRowData.studentName){
          //Takes out students who don't have a tutoring schedule
-         if (rowData.tutor1 === "-") {
+         if (rowData.tutor1 && rowData.tutor2 === "-") {
             Logger.log("Tutor 1 is not assigned");
           } else if (rowData.tutor1 === "NS") {
             Logger.log("Must see Ken Hyde by Thursday of Week 2 to schedule tutors.");
@@ -49,7 +56,7 @@ function sendEmails() {
         var emailSubject = "Tutoring Schedule Change";
      
        Logger.log(emailText);
-  //     MailApp.sendEmail(rowData.email, emailSubject, emailText);
+       MailApp.sendEmail(rowData.email, emailSubject, emailText, {'from': "me"});
   
         }//ends if else clause
 
@@ -122,7 +129,7 @@ function getRowsData(sheet, range, columnHeadersRowIndex) {
   columnHeadersRowIndex = columnHeadersRowIndex || range.getRowIndex() - 1;
   var numColumns = range.getEndColumn() - range.getColumn() + 1;
   //Logger.log(numColumns);
-  var headersRange = sheet.getRange(1,1,1,12);
+  var headersRange = sheet.getRange(1,1,1,sheet.getMaxColumns());
   var headers = headersRange.getValues()[0];
   return getObjects(range.getValues(), normalizeHeaders(headers));
 }
@@ -230,7 +237,9 @@ function firstNameFirst(studentName){
 //spells out days of the week.      
 function spellDay(day) {
   switch (day) {
-
+    case "-":
+      day = "-";
+      break;
     case "M":
       day = "Monday";
       break;
@@ -257,22 +266,34 @@ function spellDay(day) {
 
 //function extracts time  
 function extractTime(time) {
-  var hour = time.getHours();
-  var minute = time.getMinutes();
-  if (minute === 0) {
-    minute = minute.toString();
-    minute = minute.concat("0pm");
-  } else {
-    minute = minute.toString();
-    minute = minute.concat("am");
-  }
-  time = hour.toString().concat(":").concat(minute);
+  
+  if(time === "-"){
+  time = "-";
+  }else{
+    var hour = time.getHours();
+    hour = hour - 3;
+    var minute = time.getMinutes();
+    if (minute === 0) {
+      minute = minute.toString();
+      minute = minute.concat("0pm");
+    } else {
+      minute = minute.toString();
+      minute = minute.concat("am");
+    }
+    time = hour.toString().concat(":").concat(minute);
+  };
   return time;
 };
 
 
 
 
+function getEmailFromUser() {
+ var me = Session.getActiveUser().getEmail();
+// var aliases = GmailApp.getAliases();
+ Logger.log(me);
+  return me;
+} 
 
 
 
