@@ -3,8 +3,6 @@
  var dataSheet = ss.getSheets()[0];
  var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(),dataSheet.getMaxColumns());
  
-
-
 //main function of app, runs on onEdit trigger. 
 //This function goes through each row, comapres them to the old schedule, fills in email template, sends email and then updates the old schedule.
 function sendEmails() {
@@ -18,13 +16,29 @@ function sendEmails() {
   var templateSheet = ss.getSheets()[1];
   var emailTemplate = templateSheet.getRange("A1").getValue();
   
+  if(!emailTemplate){
+    Logger.log("email template is empty");
+    return
+  }
+  
   // get old schedule and make it into javascript objects
   var oldSchedule = ss.getSheetByName("Copy of Schedule");
+  
+  if(!oldSchedule){
+    Logger.log("Copy of Schedule does not exist or has been renamed");
+    return;
+  }
+  
   var oldScheduleRange = oldSchedule.getRange(1, 1, oldSchedule.getMaxRows(), oldSchedule.getMaxColumns());
   var oldObjects = getRowsData(oldSchedule, oldScheduleRange);
  
   //make new schedule into javascript object
-  objects = getRowsData(dataSheet, dataRange);
+  var objects = getRowsData(dataSheet, dataRange);
+  
+  if (!objects || !oldObjects) {
+    Logger.log("The file is empty or abnormal");
+    return
+  }
   
   // For every row object, create a personalized email from a template and send
   // it to the appropriate person.
@@ -33,14 +47,26 @@ function sendEmails() {
     var rowData = objects[i];
     var oldRowData = oldObjects[i];
     
+    if (!rowData || !oldRowData) {
+      continue;
+    }
+    
+    if (rowData.studentName != oldRowData.studentName) {
+      continue;
+    }
+    
     //if the student name is the same but tutor1 or tutor2 don't match then it will prepare to send email
-    if(rowData.code1 != oldRowData.code1 || rowData.code2 != oldRowData.code2 && rowData.studentName == oldRowData.studentName){
+    if ( rowData.code1 != oldRowData.code1 || rowData.code2 != oldRowData.code2 ){
          //Takes out students who don't have a tutoring schedule
          if (rowData.tutor1 && rowData.tutor2 === "-") {
             Logger.log("Tutor 1 is not assigned");
-          } else if (rowData.tutor1 === "NS") {
+            continue;
+          } 
+          
+          if (rowData.tutor1 === "NS") {
             Logger.log("Must see Ken Hyde by Thursday of Week 2 to schedule tutors.");
-          } else {   
+            continue;
+          } 
 
         //these functions clean the data to place into template
         rowData.day1 = spellDay(rowData.day1);
@@ -55,17 +81,11 @@ function sendEmails() {
         var emailText = fillInTemplateFromObject(emailTemplate, rowData);
         var emailSubject = "Tutoring Schedule Change";
      
-       Logger.log(emailText);
-       MailApp.sendEmail(rowData.email, emailSubject, emailText, {'from': "me"});
-  
-        }//ends if else clause
+       Logger.log(rowData.code1);
+     //  MailApp.sendEmail(rowData.email, emailSubject, emailText, {'from': "me"});
 
-
-
-    }else{
-  //  Logger.log("Data was equal");
-    };//ends else clause
- 
+      //  getRow(i).setBackgroundColor("#CC6666");          
+     
   }//ends for loop 
    
   //updates old schedule 
