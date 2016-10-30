@@ -317,3 +317,42 @@ function getEmailFromUser() {
   Logger.log(me);
   return me;
 }
+
+
+
+
+
+
+
+
+
+
+
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  // Or DocumentApp or FormApp.
+  ui.createMenu('Custom Menu')
+      .addItem('Send Emails', 'menuItem1')
+      .addToUi();
+}
+
+function menuItem1() {
+  sendEmails();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
