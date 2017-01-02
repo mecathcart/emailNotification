@@ -3,7 +3,7 @@ var ss = SpreadsheetApp.getActiveSpreadsheet();
 var dataSheet = ss.getSheets()[0];
 var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(), dataSheet.getMaxColumns());
 
-//main function of app, runs on onEdit trigger. 
+//main function of app
 //This function goes through each row, comapres them to the old schedule, fills in email template, sends email and then updates the old schedule.
 function sendEmails() {
   getEmailFromUser();
@@ -47,11 +47,11 @@ function sendEmails() {
     var rowData = objects[i];
     var oldRowData = oldObjects[i];
 
-    if (!rowData || !oldRowData) {
-      Logger.log("either new or old schedule is empty");
+    if (!rowData || !oldRowData || !rowData.email) {
+      Logger.log("either new or old schedule is empty or missing email");
       continue;
     }
-
+    
     if (rowData.studentName != oldRowData.studentName) {
       continue;
     }
@@ -84,7 +84,7 @@ function sendEmails() {
       var emailSubject = "Tutoring Schedule Change";
 
       Logger.log(rowData.code1);
-      //  MailApp.sendEmail(rowData.email, emailSubject, emailText, {'from': "me"});
+      MailApp.sendEmail(rowData.email, emailSubject, emailText, {'from': "me"});
       
       var row = dataSheet.getRange(i+1,1);
       row.setBackground("#a9f2cd");
