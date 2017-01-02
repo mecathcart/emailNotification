@@ -1,6 +1,7 @@
 //identifies spreadsheet and first sheet
 var ss = SpreadsheetApp.getActiveSpreadsheet();
 var dataSheet = ss.getSheets()[0];
+var oldScheduleSheet = ss.getSheets()[2];
 var dataRange = dataSheet.getRange(1, 1, dataSheet.getMaxRows(), dataSheet.getMaxColumns());
 
 //main function of app
@@ -55,12 +56,87 @@ function sendEmails() {
     if (rowData.studentName != oldRowData.studentName) {
       continue;
     }
+  
+    //find students who have signed up for clusters
+    if (oldScheduleSheet.getRange(i+1,2).getBackground() === "#846591"){
+     var ui = SpreadsheetApp.getUi();
+     var response = ui.alert(rowData.studentName + 'signed up for a cluster.  Do you want to add the cluster to the schedule?', ui.ButtonSet.YES_NO);
+    // Process the user's response.
+     if (response == ui.Button.YES) {
+      var rowCluster = dataSheet.getRange(i+1,1);
+      rowCluster.setBackground("#846591");
+      
+      var tutorCell = dataSheet.getRange(i+1,2);
+      tutorCell.setValue(oldScheduleSheet.getRange(i+1,2).getValue());
+       
+      var dayCell = dataSheet.getRange(i+1,3);
+      dayCell.setValue(oldScheduleSheet.getRange(i+1,3).getValue());
+       
+      var timeCell = dataSheet.getRange(i+1,4);
+      timeCell.setValue(oldScheduleSheet.getRange(i+1,4).getValue());
+       
+      var locationCell = dataSheet.getRange(i+1,8);
+      locationCell.setValue(oldScheduleSheet.getRange(i+1,8).getValue());
+
+      var nameCell = dataSheet.getRange(i+1,10);
+      nameCell.setValue(oldScheduleSheet.getRange(i+1,10).getValue());
+
+      Logger.log('The user clicked "Yes."');
+      continue;
+       } else {
+       Logger.log('The user clicked "No" or the close button in the dialog\'s title bar.');
+       }
+//    Logger.log("line of code");
+    }
+    
+    
+      if (oldScheduleSheet.getRange(i+1,5).getBackground() === "#846591"){
+       var ui = SpreadsheetApp.getUi();
+       var response = ui.alert(rowData.studentName + ' signed up for a cluster.  Do you want to add the cluster to the schedule?', ui.ButtonSet.YES_NO);
+      // Process the user's response.
+       if (response == ui.Button.YES) {
+        var rowCluster = dataSheet.getRange(i+1,1);
+        rowCluster.setBackground("#846591");
+        
+        var tutor2Cell = dataSheet.getRange(i+1,5);
+        tutor2Cell.setValue(oldScheduleSheet.getRange(i+1,5).getValue());
+       
+        var day2Cell = dataSheet.getRange(i+1,6);
+        day2Cell.setValue(oldScheduleSheet.getRange(i+1,6).getValue());
+       
+        var time2Cell = dataSheet.getRange(i+1,7);
+        time2Cell.setValue(oldScheduleSheet.getRange(i+1,7).getValue());
+       
+        var location2Cell = dataSheet.getRange(i+1,9);
+        location2Cell.setValue(oldScheduleSheet.getRange(i+1,9).getValue());
+
+        var name2Cell = dataSheet.getRange(i+1,11);
+        name2Cell.setValue(oldScheduleSheet.getRange(i+1,11).getValue());
+
+      Logger.log('The user clicked "Yes."');
+      continue;
+
+       } else {
+       Logger.log('The user clicked "No" or the close button in the dialog\'s title bar.');
+       }
+//    Logger.log("line of code");
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+
     
    //Takes out students who don't have a tutoring schedule
     if (rowData.tutor1 && rowData.tutor2 === "-") {
    //    Logger.log("Tutor 1 is not assigned");
         continue;
      }
+     
 
      if (rowData.tutor1 === "NS") {
  //      Logger.log("Must see Ken Hyde by Thursday of Week 2 to schedule tutors.");
@@ -83,8 +159,8 @@ function sendEmails() {
       var emailText = fillInTemplateFromObject(emailTemplate, rowData);
       var emailSubject = "Tutoring Schedule Change";
 
-      Logger.log(rowData.code1);
-      MailApp.sendEmail(rowData.email, emailSubject, emailText, {'from': "me"});
+     // Logger.log(rowData.code1);
+   //   MailApp.sendEmail(rowData.email, emailSubject, emailText, {'from': "me"});
       
       var row = dataSheet.getRange(i+1,1);
       row.setBackground("#a9f2cd");
@@ -314,7 +390,7 @@ function extractTime(time) {
 function getEmailFromUser() {
   var me = Session.getActiveUser().getEmail();
   // var aliases = GmailApp.getAliases();
-  Logger.log(me);
+ // Logger.log(me);
   return me;
 }
 
